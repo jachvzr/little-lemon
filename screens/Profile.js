@@ -1,20 +1,20 @@
 //import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { useState } from 'react';
+// import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, Pressable, Image, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { validateEmail, validateName } from '../utils';
+// import { validateEmail, validateName } from '../utils';
 
-export default function Onboarding({ setIsOnboardingCompleted }) {
+export default function Profile() {
 
-  const [email, onChangeEmail] = useState('');
-  const [name, onChangeName] = useState('');
+  // const [email, onChangeEmail] = useState('');
+  // const [name, onChangeName] = useState('');
 
-  const displayMessage = () => {
-    if ((validateEmail(email) != null) && (validateName(name) != null)) {
-      alert("Thanks for subscribing. Stay tuned!");
-      //onChangeEmail('');
-    }
-  };
+  // const displayMessage = () => {
+  //   if ((validateEmail(email) != null) && (validateName(name) != null)) {
+  //     alert("Thanks for subscribing. Stay tuned!");
+  //     //onChangeEmail('');
+  //   }
+  // };
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.container}>
@@ -35,40 +35,8 @@ export default function Onboarding({ setIsOnboardingCompleted }) {
       <View style={styles.body}>
 
         <Text style={styles.title}>
-          Let us get to know you
+          Profile Page
         </Text>
-
-        <View style={styles.form}>
-
-          <Text style={styles.regularText}>
-            First Name
-          </Text>
-          <TextInput
-            style={styles.inputBox}
-            value={name}
-            onChangeText={onChangeName}
-            placeholder={'enter your name'}
-            keyboardType={'default'}
-          />
-
-          <Text style={styles.regularText}>
-            Email
-          </Text>
-          <TextInput
-            style={styles.inputBox}
-            value={email}
-            onChangeText={onChangeEmail}
-            placeholder={'email'}
-            keyboardType={'email-address'}
-            // secureTextEntry={true}
-          />
-
-          <Pressable onPress={displayMessage}
-          style={(validateEmail(email) != null) && (validateName(name) != null) ? styles.buttonEnabled : styles.buttonDisabled}>
-            <Text style={styles.buttonText}>Next</Text>
-          </Pressable>
-
-        </View>
 
       </View>
 

@@ -6,16 +6,6 @@ import { StyleSheet, Text, TextInput, View, Pressable, Image, KeyboardAvoidingVi
 
 export default function Splash() {
 
-  // const [email, onChangeEmail] = useState('');
-  // const [name, onChangeName] = useState('');
-
-  // const displayMessage = () => {
-  //   if ((validateEmail(email) != null) && (validateName(name) != null)) {
-  //     alert("Thanks for subscribing. Stay tuned!");
-  //     //onChangeEmail('');
-  //   }
-  // };
-
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.container}>
 

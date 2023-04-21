@@ -4,9 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import AnimatedCheckbox from 'react-native-checkbox-reanimated';
 import { MaskedTextInput } from "react-native-mask-text";
+import { LogBox } from 'react-native';
 
 import { readData, writeData, clearData, removeItem, isOnboardingCompleted, setIsOnboardingCompleted} from '../functions/AsyncStorageFunctions';
 import { validEmail, validName } from '../utils/index';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Profile({ navigation, route }) {
 
@@ -23,9 +25,14 @@ export default function Profile({ navigation, route }) {
   const [avatar, setAvatar] = useState(null);
   const [initials, setInitials] = useState('');
 
+  const [miniAvatar, setMiniAvatar] = useState(null);
+  const [miniInitials, setMiniInitials] = useState('');
+
   useEffect(() => {
     updateStatesFromStorage();
     updateInitials(true);
+    // console.log(initials);
+    // c   
   }, []);
 
   // useEffect(() => {
@@ -65,6 +72,10 @@ export default function Profile({ navigation, route }) {
       const rAvatar = await AsyncStorage.getItem('avatar');
       // rAvatar !== 'null' ? setAvatar(rAvatar) : setAvatar(null);
       setAvatar(rAvatar);
+      setMiniAvatar(rAvatar);
+      // setMiniInitials(initials); 
+
+      // const rInitials = await AsyncStorage.getItem('initials');
 
     } catch (error) {
       // Error retrieving data
@@ -205,6 +216,7 @@ export default function Profile({ navigation, route }) {
           value = rFirstName['0'];
           if (rLastName !== 'null') {value = value + rLastName['0']}
         }
+        setMiniInitials(value);
       } else {
         if (avatar !== null) {
           value = '';
@@ -214,12 +226,16 @@ export default function Profile({ navigation, route }) {
         }
       }
       setInitials(value);
+      // writeData('initials', value);
       
     } catch(error) {
       console.log(error);
     }
   };
 
+  LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+  ]);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -230,14 +246,25 @@ export default function Profile({ navigation, route }) {
 
       <View style={styles.header}>
 
-        <Text style={styles.headerText}>
-        </Text>
+      <Text style={styles.blankBox}></Text>
 
         <Image
           style={styles.logo}
           resizeMode='contain'
           source={require('../assets/Logo.png')}
         />
+
+        <ImageBackground
+            key={miniAvatar ? miniAvatar : Math.random()}
+            style={styles.miniAvatarIcon}
+            // imageStyle={{ borderRadius: 40 }}
+            resizeMode='contain'
+            //source={require('../assets/Logo.png')}
+            source={{ uri: miniAvatar }}>
+            <View style={styles.overMiniAvatar}>
+            <Text style={styles.textOverMiniAvatar}>{miniInitials}</Text>
+            </View>
+        </ImageBackground>
 
       </View>
 
@@ -419,12 +446,14 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 30,
+    paddingHorizontal: 16,
     color: '#EDEFEE',
     backgroundColor: '#EDEFEE',
     // backgroundColor: 'blue',
     // width: '100%',
     // height: '18%',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerText: {
@@ -516,6 +545,28 @@ const styles = StyleSheet.create({
   label: {
     margin: 8,
     color: '#EDEFEE',
+  },
+  blankBox: {
+    width: 60,
+  },
+  miniAvatarIcon: {
+    height: 60,
+    width: 60,
+    borderRadius: 30,
+    overflow: 'hidden',
+    backgroundColor: '#333333',
+  },
+  overMiniAvatar: {
+    height: 60,
+    width: 60,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textOverMiniAvatar: {
+    color: '#EDEFEE',
+    fontSize: 30,
+    // fontWeight: 'bold',
   },
   avatarSection: {
     flexDirection: 'row',

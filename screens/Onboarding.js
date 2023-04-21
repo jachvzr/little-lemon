@@ -9,6 +9,7 @@ import { readData, writeData } from '../functions/AsyncStorageFunctions';
 
 import { KeyboardAvoidingView, SafeAreaView, Pressable, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LogBox } from 'react-native';
 
 const Onboarding = ({ route }) => {
   const [firstName, setFirstName] = useState('');
@@ -86,6 +87,10 @@ const Onboarding = ({ route }) => {
       }
     }
   };
+
+  LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+  ]);
 
   return (
 

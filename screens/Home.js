@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, Pressable, StyleSheet, Image, ImageBackground, TextInput, ScrollView, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, ImageBackground, TextInput, FlatList, ScrollView, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogBox } from 'react-native';
+import debounce from 'lodash.debounce';
+
+import { createTable, clearDatabase, getMenuItems, saveMenuItems, filterByQueryAndCategories } from '../functions/SQLiteFunctions';
+import Filters from '../utils/Filters';
+
+// const db = SQLite.openDatabase({ name: 'mydb.db', createFromLocation: '~capstone.db' });
+
+// import { parse } from 'react-native-svg';
+
+// const categories = [{'name':'starters'},{'name':'mains'},{'name':'desserts'}];
+const categories = ['starters', 'mains', 'desserts','other1'];
 
 export default function Home({ navigation }) {
 
@@ -11,40 +22,52 @@ export default function Home({ navigation }) {
     const [firstName, onChangeFirstName] = useState('');
     const [lastName, onChangeLastName] = useState('');
 
+    const [data, setData] = useState([]);
+    const [searchBarText, setSearchBarText] = useState('');
+    const [query, setQuery] = useState('');
+    const [selectedItems, setSelectedItems] = useState([]);
+
     useFocusEffect(
         React.useCallback(() => {
             updateInitials(true);
         })
     );
 
-    // useEffect(() => {
-    //     // updateStatesFromStorage();
-    //     updateInitials(true);
-    // }, []);
+    useEffect(() => {
+        (async () => {
+        //   console.log('first use effect');
+          try {
+            await createTable();
+            // await clearDatabase();
+            let menuItems = await getMenuItems();
+            if (!menuItems.length) {
+              menuItems = await fetchData();
+              saveMenuItems(menuItems);
+            }
+            setData(menuItems);
+          } catch (e) {
+            console.log(e.message);
+          }
+        })();
+      }, []);
 
-    // useEffect(() => {
-    //     updateInitials(false);
-    //   }, [avatar]);
 
-    const updateStatesFromStorage = async () => {
-        try {    
-            const rAvatar = await AsyncStorage.getItem('avatar');
-            // rAvatar !== 'null' ? setAvatar(rAvatar) : setAvatar(null);
-            setAvatar(rAvatar);
+    const fetchData = async() => {
+    let parsedRes = {}
+    let res = {}
+    try { 
+        const response = await fetch(
+            'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json' 
+        );
+        res = await response.json();
+        parsedRes = res.menu;
 
-            // const rName = await AsyncStorage.getItem('firstName');
-            // onChangeFirstName(rName !== 'null' ? rName : '');
-
-            // const rLastName = await AsyncStorage.getItem('lastName');
-            // onChangeLastName(rLastName !== 'null' ? rLastName : '');
-    
-        } catch (error) {
-          // Error retrieving data
-          console.log(error);
-        } finally {
-          // setIsLoading(false);
-        }
+    } catch (error) { 
+        console.error(error);
     }
+    return parsedRes;
+    }
+
 
     const updateInitials = async (fromAsync) => {
         let rFirstName;
@@ -78,16 +101,108 @@ export default function Home({ navigation }) {
         }
       };
 
-      LogBox.ignoreLogs([
-        'Non-serializable values were found in the navigation state',
-      ]);
+    useEffect(() => {
+        (async () => {
+          try {
+            const filterArray = selectedItems.length === 0 ? categories : selectedItems;
+            // console.log('useEffect: ' + filterArray)
+            const filteredMenuItems = await filterByQueryAndCategories(query, filterArray);
+            setData(filteredMenuItems);
+          } catch (e) {
+            alert(e.message);
+          }
+        })();
+      }, [selectedItems, query]);
+
+
+      const handleToggleItem = (category) => {
+        setSelectedItems((prevItems) => {
+          const index = prevItems.indexOf(category);
+          if (index >= 0) {
+            return [...prevItems.slice(0, index), ...prevItems.slice(index + 1)];
+          } else {
+            return [...prevItems, category];
+          }
+        });
+      };
+
+      const lookup = useCallback((q) => {
+        setQuery(q);
+      }, []);
+    
+      const debouncedLookup = useMemo(() => debounce(lookup, 500), [lookup]);
+
+      const handleSearchChange = (text) => {
+        setSearchBarText(text);
+        debouncedLookup(text);
+      };
+
+    LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+    ]);
+
+    const MenuItemsSeparator = () => {
+        return (
+          <View
+            style={{
+              height: 1,
+              width: "100%",
+              backgroundColor: "#DDD",
+            }}
+          />
+        );
+      }
+
+    const FilterItem = ({ category }) => {
+        const isSelected = selectedItems.includes(category);
+        return (
+        <Pressable
+            key={category}
+            style={
+                isSelected ? styles.filterItemSelected : styles.filterItem 
+            }
+            onPress={() => handleToggleItem(category)}
+        >
+        {/* <View style={styles.filterItem}> */}
+            <Text style={
+                isSelected ? styles.filterItemTextSelected : styles.filterItemText
+            }>{category}</Text>
+        {/* </View> */}
+        </Pressable>
+        );
+    };
+
+    const MenuItem = ({ title, description, price, image }) => (
+    <View style={styles.item}>
+        
+        <View style={styles.itemDetails}>
+
+            <View style={styles.itemText}>
+                <Text style={styles.itemTitle}>{title}</Text>
+                <Text numberOfLines={3} style={styles.itemDescription}>{description}</Text>
+                <Text style={styles.itemPrice}>${price}</Text>
+            </View>
+        
+            <View style={styles.itemImageFrame}>
+            <Image
+            style={styles.itemImage}
+            // resizeMode='contain'
+            source={{uri:'https://github.com/Meta-Mobile-Developer-PC/Working-With-Data-API/blob/main/images/' + image + '?raw=true'}}
+            />
+            </View>
+        </View>
+        
+    </View>
+    );
 
     return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 
-    {/* <SafeAreaView> */}
-    <ScrollView>
+    // <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    // <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
+    //{/* <SafeAreaView> */}
+    //{/* <ScrollView> */}
+    <View style={styles.container}>
 
     <View style={styles.header}>
 
@@ -115,34 +230,141 @@ export default function Home({ navigation }) {
 
     </View>
 
-      
+    <View style={styles.hero}>
 
-    <View style={styles.body}>
+        
 
-        <Text style={styles.title}>
-          HOME!!!
+        <View style={styles.heroBlock}>
+            <View style={styles.heroBlockLeft}>
+
+            <Text style={styles.heroTitle}>
+          Little Lemon
         </Text>
 
+                <Text style={styles.heroSubtitle}>
+                Chicago
+                </Text>
+                <Text style={styles.heroText}>
+                We are a family owned Mediterranean restaurant, focused on traditional recipes served with a modern twist.
+                </Text>
+            </View>
+
+            <View style={styles.heroBlockRight}>
+                <Image
+                style={styles.heroImage}
+                // resizeMode='contain'
+                source={require('../assets/HeroImage.png')}
+                />
+            </View>            
+        </View>
+
+        <View style={styles.heroSearch}>
+        <TextInput
+          style={styles.inputBox}
+          value={searchBarText}
+          onChangeText={handleSearchChange}
+          placeholder={'search'}
+          keyboardType={'default'}
+        />
+        </View>
 
     </View>
+
+    <View style={styles.filters}>
+        <Text style={styles.filterTitle}>ORDER FOR DELIVERY!</Text>
+        <FlatList
+            data={categories}
+            renderItem={({ item }) => (
+                <FilterItem category={item} />
+              )}
+              horizontal={true}
+            keyExtractor={(item) => item}
+        />
+        {/* <Filters
+        selections={filterSelections}
+        onChange={handleFiltersChange}
+        sections={sections}
+        /> */}
+    </View>
+
+
+
+        <FlatList
+            data={data}
+            renderItem={({ item }) => (
+                <MenuItem title={item.name} price={item.price} description={item.description} image={item.image}/>
+              )}
+            keyExtractor={(item) => item.name}
+            ItemSeparatorComponent={MenuItemsSeparator}
+        />
+        
     
-    </ScrollView>
-    {/* </SafeAreaView> */}
+    </View>
+
+    // {/* </ScrollView> */}
+    // {/* </SafeAreaView> */}
     
-    </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    // </TouchableWithoutFeedback>
+    // </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+    
   container: {
     flex: 1,
     // height: '100%',
-    backgroundColor: '#495E57',
+    backgroundColor: '#EDEFEE',
     alignSelf: 'stretch',
     // alignItems: 'center',
     // justifyContent: 'center',
   },
+  hero: {
+    backgroundColor: '#495E57',
+    // flex: 1,
+    // flexDirection: 'column',
+    padding: 30,
+    paddingBottom: 4,
+},
+heroTitle: {
+    color: '#F4CE14',
+    fontSize: 42,
+    // margin: 30,
+// textAlign: 'center',
+},
+heroBlock: {
+    // flex: 1,
+    flexDirection: 'row',
+    // alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    // backgroundColor: 'blue',
+},
+heroSearch: {
+    // marginBottom: 15,
+},
+heroSubtitle: {
+    fontSize: 26,
+    marginBottom: 15,
+    color: '#EDEFEE',
+},
+heroText: {
+    marginRight: 15,
+    fontSize: 18,
+    color: '#EDEFEE',
+},
+heroBlockLeft: {
+    flex: 1,
+},
+heroBlockRight: {
+    // backgroundColor: 'red',
+},
+heroImage: {
+    width: 150,
+    height: 180,
+    resizeMode: 'cover',
+    borderRadius: 15,
+},
   header: {
     paddingTop: 30,
     paddingHorizontal: 16,
@@ -158,6 +380,76 @@ const styles = StyleSheet.create({
   headerText: {
     textAlign: 'center',
     fontSize: 36,
+  },
+  filters: {
+    height: 80,
+    backgroundColor: '#DDD',
+    // paddingLeft: 30,
+    // marginLeft: 30,
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginVertical: 6,
+    marginLeft: 15,
+  },
+  filterItem: {
+    backgroundColor: '#BBB',
+    marginBottom: 12,
+    justifyContent: 'center',
+    borderRadius: 30,
+    marginLeft: 15,
+  },
+  filterItemText: {
+    marginHorizontal: 16,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  filterItemSelected: {
+    backgroundColor: '#F4CE14',
+    marginBottom: 12,
+    justifyContent: 'center',
+    borderRadius: 30,
+    marginLeft: 15,
+  },
+  filterItemTextSelected: {
+    marginHorizontal: 16,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  item: {
+    marginHorizontal: 30,
+    marginVertical: 20,
+  },
+  itemTitle: {
+    fontSize: 26,
+    marginBottom: 6,
+    fontWeight: 'bold',
+  },
+  itemDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  itemText: {
+    flex: 1,
+    marginRight: 20,
+  },
+  itemImageFrame: {
+    // width: 100,
+    // height: 100,
+    // resizeMode: 'contain',
+  },
+  itemImage: {
+    width: 100,
+    height: 100,
+    resizeMode: 'cover',
+    borderRadius: 15,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
   },
   body: {
     // flexGrow: 1,
@@ -193,9 +485,9 @@ const styles = StyleSheet.create({
   // },
   inputBox: {
     height: 48,
-    marginBottom: 16,
+    marginVertical: 16,
     //borderWidth: 2,
-    borderRadius: 18,
+    borderRadius: 15,
     paddingHorizontal: 24,
     fontSize: 18,
     borderColor: '#333333',

@@ -31,13 +31,8 @@ export default function Profile({ navigation, route }) {
   useEffect(() => {
     updateStatesFromStorage();
     updateInitials(true);
-    // console.log(initials);
-    // c   
   }, []);
 
-  // useEffect(() => {
-  //   updateInitials(true);
-  // }, []);
 
   useEffect(() => {
     updateInitials(false);
@@ -70,18 +65,14 @@ export default function Profile({ navigation, route }) {
       setNewsletter(rNewsletter === 'true');
 
       const rAvatar = await AsyncStorage.getItem('avatar');
-      // rAvatar !== 'null' ? setAvatar(rAvatar) : setAvatar(null);
+
       setAvatar(rAvatar);
       setMiniAvatar(rAvatar);
-      // setMiniInitials(initials); 
-
-      // const rInitials = await AsyncStorage.getItem('initials');
 
     } catch (error) {
       // Error retrieving data
       console.log(error);
     } finally {
-      // setIsLoading(false);
     }
   }
 
@@ -119,15 +110,16 @@ export default function Profile({ navigation, route }) {
   }
 
   const checkLastName = () => {
-    if (lastName !== '') {
+
+    if (lastName === undefined || lastName === null || lastName === '') {
+      return true;
+    } else if (lastName !== '') {
       if (validName(lastName.trim())) {
-        return (true);
+        return true;
       }
       alert('Please fix your last name');
-      return false;
+        return false;
     }
-    // alert('Please type your first name');
-    return true; //not mandatory
   }
 
   const checkPhone = () => {
@@ -144,10 +136,11 @@ export default function Profile({ navigation, route }) {
   const exitProfile = () => {
     updateStatesFromStorage();
     navigation.navigate('Home');
+    
   };
 
   const saveAndExit = () => {
-
+    
     if (checkEmail() && checkName() && checkLastName() && checkPhone()) {
       validateAndSave('email', email,'');
       validateAndSave('firstName', firstName,'');
@@ -159,28 +152,19 @@ export default function Profile({ navigation, route }) {
       validateAndSave('newsletter', newsletter, 'false');
       validateAndSave('avatar', avatar, null);
       updateInitials();
+
       exitProfile();
     }
 
   };
 
-  // const validateAndSave = (key, value) => {
-  //   if (value !== null) {
-  //     if (typeof value !== 'string') {
-  //       value = JSON.stringify(value);
-  //     }
-  //     writeData(key,value.trim());
-  //   } 
-  // }
-
   const validateAndSave = (key, value, falsy) => {
-    if (value !== falsy || value !== null) { //should be &&????
+    if (value !== falsy || value !== null) {
       if (typeof value !== 'string') {
         value = JSON.stringify(value);
       }
       writeData(key,value.trim());
     } else {
-      //writeData(key, falsy);
       removeItem(key);
     }
   }
@@ -214,7 +198,7 @@ export default function Profile({ navigation, route }) {
           rFirstName = await AsyncStorage.getItem('firstName');
           rLastName = await AsyncStorage.getItem('lastName');
           value = rFirstName['0'];
-          if (rLastName !== 'null') {value = value + rLastName['0']}
+          if (rLastName !== null && rLastName !== 'null') {value = value + rLastName['0']}
         }
         setMiniInitials(value);
       } else {
@@ -226,7 +210,6 @@ export default function Profile({ navigation, route }) {
         }
       }
       setInitials(value);
-      // writeData('initials', value);
       
     } catch(error) {
       console.log(error);
@@ -241,12 +224,15 @@ export default function Profile({ navigation, route }) {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 
-    {/* <SafeAreaView> */}
     <ScrollView>
 
       <View style={styles.header}>
 
-      <Text style={styles.blankBox}></Text>
+      <Pressable style={styles.backButton} onPress={exitProfile}>
+            <View style={styles.overBackButton}>
+            <Text style={styles.backButtonText}>{'<'}</Text>
+            </View>
+        </Pressable>
 
         <Image
           style={styles.logo}
@@ -257,9 +243,7 @@ export default function Profile({ navigation, route }) {
         <ImageBackground
             key={miniAvatar ? miniAvatar : Math.random()}
             style={styles.miniAvatarIcon}
-            // imageStyle={{ borderRadius: 40 }}
             resizeMode='contain'
-            //source={require('../assets/Logo.png')}
             source={{ uri: miniAvatar }}>
             <View style={styles.overMiniAvatar}>
             <Text style={styles.textOverMiniAvatar}>{miniInitials}</Text>
@@ -279,20 +263,10 @@ export default function Profile({ navigation, route }) {
         <Text style={styles.sectionTitle}>Avatar</Text>
         <View style={styles.avatarSection}>
 
-          {/* <Image
-            key={avatar ? avatar : Math.random()}
-            style={styles.avatarIcon}
-            resizeMode='contain'
-            //source={require('../assets/Logo.png')}
-            source={{ uri: avatar }}
-          /> */}
-
           <ImageBackground
             key={avatar ? avatar : Math.random()}
             style={styles.avatarIcon}
-            // imageStyle={{ borderRadius: 40 }}
             resizeMode='contain'
-            //source={require('../assets/Logo.png')}
             source={{ uri: avatar }}>
               <View style={styles.overAvatar}>
                 <Text style={styles.textOverAvatar}>{initials}</Text>
@@ -334,7 +308,7 @@ export default function Profile({ navigation, route }) {
           value={email}
           onChangeText={onChangeEmail}
           placeholder={'enter your email'}
-          keyboardType={'default'}
+          keyboardType={'email-address'}
         />
 
         <Text style={styles.sectionTitle}>Phone number</Text>
@@ -346,15 +320,6 @@ export default function Profile({ navigation, route }) {
           keyboardType={'phone-pad'}
           mask="999-999-9999"
         />
-
-        {/* <View style={styles.checkboxContainer}>
-          <CheckBox
-            value={orderStatuses}
-            onValueChange={setOrderStatuses}
-            style={styles.checkbox}
-          />
-          <Text style={styles.label}>Order statuses</Text>
-        </View> */}
 
         <Text style={styles.title}>
           Email notifications
@@ -428,7 +393,6 @@ export default function Profile({ navigation, route }) {
       </View>
     
       </ScrollView>
-    {/* </SafeAreaView> */}
     
     </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -438,20 +402,14 @@ export default function Profile({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // height: '100%',
     backgroundColor: '#495E57',
     alignSelf: 'stretch',
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   header: {
     paddingTop: 30,
     paddingHorizontal: 16,
     color: '#EDEFEE',
     backgroundColor: '#EDEFEE',
-    // backgroundColor: 'blue',
-    // width: '100%',
-    // height: '18%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -461,41 +419,21 @@ const styles = StyleSheet.create({
     fontSize: 36,
   },
   body: {
-    // flexGrow: 1,
-    //fontSize: 32,
     color: '#EDEFEE',
     textAlign: 'center',
     backgroundColor: '#495E57',
-    // width: '100%',
-    //height: '84%',
     flex: 6,
     paddingHorizontal: 24,
-    // justifyContent: 'center',
-  },
-  form: {
-    // padding: 20,
-    // fontSize: 32,
-    // color: '#EDEFEE',
-    //textAlign: 'center',
   },
   title: {
     paddingVertical: 12,
     fontSize: 18,
     fontWeight: 'bold',
-    // textAlign: 'center',
     color: '#EDEFEE',
   },
-  // regularText: {
-  //   fontSize: 24,
-  //   // marginTop: 24,
-  //   marginBottom: 12,
-  //   color: '#EDEFEE',
-  //   textAlign: 'center',
-  // },
   inputBox: {
     height: 48,
     marginBottom: 16,
-    //borderWidth: 2,
     borderRadius: 18,
     paddingHorizontal: 24,
     fontSize: 18,
@@ -507,7 +445,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     marginVertical: 32,
-    // marginLeft: 220,
   },
   buttonDisabled: {
     backgroundColor: '#EDEFEE',
@@ -546,9 +483,6 @@ const styles = StyleSheet.create({
     margin: 8,
     color: '#EDEFEE',
   },
-  blankBox: {
-    width: 60,
-  },
   miniAvatarIcon: {
     height: 60,
     width: 60,
@@ -566,20 +500,17 @@ const styles = StyleSheet.create({
   textOverMiniAvatar: {
     color: '#EDEFEE',
     fontSize: 30,
-    // fontWeight: 'bold',
   },
   avatarSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
     paddingBottom: 24,
-    // flexWrap: 'wrap',
   },
   buttonsSection: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     marginTop: 32,
-    // marginVertical: 32,
   },
   avatarIcon: {
     height: 80,
@@ -598,413 +529,42 @@ const styles = StyleSheet.create({
   textOverAvatar: {
     color: '#EDEFEE',
     fontSize: 40,
-    // fontWeight: 'bold',
   },
   buttonCancel: {
-    // backgroundColor: '#EDEFEE',
     padding: 14,
     borderRadius: 18,
     borderColor: '#EE9972',
     borderWidth: 2,
-    // marginTop: 60,
-    // marginLeft: 220,
   },
   buttonConfirm: {
     backgroundColor: '#EE9972',
     padding: 14,
     borderRadius: 18,
-    // marginTop: 60,
-    // marginLeft: 220,
   },
   sectionTitle: {
     marginBottom: 8,
     fontSize: 16,
     color: '#EDEFEE',
-  }
+  },
+  backButton: {
+    height: 60,
+    width: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overBackButton: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    backgroundColor: '#AAA',
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#EDEFEE',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
 });
-
-
-// //import { StatusBar } from 'expo-status-bar';
-// import React from 'react';
-// import { useState } from 'react';
-// import { StyleSheet, Text, TextInput, SafeAreaView, ScrollView, StatusBar, View, Pressable, Image, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
-// import AnimatedCheckbox from 'react-native-checkbox-reanimated';
-// import * as ImagePicker from 'expo-image-picker';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// //import { useNavigation } from '@react-navigation/native';
-
-// export default function Profile({ navigation, props }) {
-
-//   //const navigation = useNavigation();
-
-//   const [email, onChangeEmail] = useState('');
-//   const [firstName, onChangeFirstName] = useState('');
-//   const [lastName, onChangeLastName] = useState('');
-//   const [phone, onChangePhone] = useState('');
-
-//   const [orderStatuses, setOrderStatuses] = useState(false);
-//   const [passwordChanges, setPasswordChanges] = useState(false);
-//   const [specialOffers, setSpecialOffers] = useState(false);
-//   const [newsletter, setNewsletter] = useState(false);
-
-//   const logOut = () => {
-//     props.logout
-//     navigation.navigate('Onboarding');
-//   };
-//   const discardChanges = () => {
-//   };
-//   const saveChanges = () => {
-//   };
-//   const removeAvatar = () => {
-//       setAvatar(null);
-//   };
-//   // const changeAvatar = () => {
-//   // };
-
-//   const [avatar, setAvatar] = useState(null);
-//   const changeAvatar = async () => {
-//     // No permissions request is necessary for launching the image library
-//     let result = await ImagePicker.launchImageLibraryAsync({
-//       mediaTypes: ImagePicker.MediaTypeOptions.All,
-//       allowsEditing: true,
-//       aspect: [1, 1],
-//       quality: 1,
-//     });
-
-//     if (!result.canceled) {
-//       setAvatar(result.assets[0].uri);
-//     }
-//   };
-
-//   return (
-//     // <KeyboardAvoidingView behavior="padding" style={styles.container}>
-//     <SafeAreaView style={styles.container}>
-//     {/* <ScrollView> */}
-
-//       <View style={styles.header}>
-
-//         <Text style={styles.headerText}>
-//         </Text>
-
-//         <Image
-//           style={styles.logo}
-//           resizeMode='contain'
-//           source={require('../assets/Logo.png')}
-//         />
-
-//       </View>
-
-      
-
-//       <ScrollView style={styles.body}>
-
-//         <Text style={styles.title}>
-//           Personal Information
-//         </Text>
-
-//         <Text style={styles.sectionTitle}>Avatar</Text>
-//         <View style={styles.avatarSection}>
-//           <Image
-//             key={avatar ? avatar : Math.random()}
-//             style={styles.avatarIcon}
-//             resizeMode='contain'
-//             //source={require('../assets/Logo.png')}
-//             source={{ uri: avatar }}
-//           />
-
-//           {/* <View style={styles.avatarIcon}></View> */}
-
-//           <Pressable onPress={changeAvatar}
-//           style={styles.buttonConfirm}>
-//             <Text style={styles.buttonText}>Change</Text>
-//           </Pressable>
-
-//           <Pressable onPress={removeAvatar}
-//           style={styles.buttonCancel}>
-//             <Text style={styles.buttonText}>Remove</Text>
-//           </Pressable>
-//         </View>
-
-//         <Text style={styles.sectionTitle}>First name</Text>
-//         <TextInput
-//           style={styles.inputBox}
-//           value={firstName}
-//           onChangeText={onChangeFirstName}
-//           placeholder={'enter your first name'}
-//           keyboardType={'default'}
-//         />
-
-//         <Text style={styles.sectionTitle}>Last name</Text>
-//         <TextInput
-//           style={styles.inputBox}
-//           value={lastName}
-//           onChangeText={onChangeLastName}
-//           placeholder={'enter your last name'}
-//           keyboardType={'default'}
-//         />
-
-//         <Text style={styles.sectionTitle}>Email</Text>
-//         <TextInput
-//           style={styles.inputBox}
-//           value={email}
-//           onChangeText={onChangeEmail}
-//           placeholder={'enter your email'}
-//           keyboardType={'default'}
-//         />
-
-//         <Text style={styles.sectionTitle}>Phone number</Text>
-//         <TextInput
-//           style={styles.inputBox}
-//           value={phone}
-//           onChangeText={onChangePhone}
-//           placeholder={'enter your phone number'}
-//           keyboardType={'phone-pad'}
-//         />
-
-//         {/* <View style={styles.checkboxContainer}>
-//           <CheckBox
-//             value={orderStatuses}
-//             onValueChange={setOrderStatuses}
-//             style={styles.checkbox}
-//           />
-//           <Text style={styles.label}>Order statuses</Text>
-//         </View> */}
-
-//         <Text style={styles.title}>
-//           Email notifications
-//         </Text>
-        
-//         <Pressable onPress={() => setOrderStatuses(!orderStatuses)} style={styles.checkboxContainer}>
-//           <View style={styles.checkbox}>
-//             <AnimatedCheckbox
-//               checked={orderStatuses}
-//               highlightColor='#F4CE14'
-//               checkmarkColor='#495E57'
-//               boxOutlineColor='#F4CE14'
-//             />
-//           </View>
-//           <Text style={styles.label}>Order statuses</Text>
-//         </Pressable>
-
-//         <Pressable onPress={() => setPasswordChanges(!passwordChanges)} style={styles.checkboxContainer}>
-//           <View style={styles.checkbox}>
-//             <AnimatedCheckbox
-//               checked={passwordChanges}
-//               highlightColor='#F4CE14'
-//               checkmarkColor='#495E57'
-//               boxOutlineColor='#F4CE14'
-//             />
-//           </View>
-//           <Text style={styles.label}>Password changes</Text>
-//         </Pressable>
-
-//         <Pressable onPress={() => setSpecialOffers(!specialOffers)} style={styles.checkboxContainer}>
-//           <View style={styles.checkbox}>
-//             <AnimatedCheckbox
-//               checked={specialOffers}
-//               highlightColor='#F4CE14'
-//               checkmarkColor='#495E57'
-//               boxOutlineColor='#F4CE14'
-//             />
-//           </View>
-//           <Text style={styles.label}>Special offers</Text>
-//         </Pressable>
-
-//         <Pressable onPress={() => setNewsletter(!newsletter)} style={styles.checkboxContainer}>
-//           <View style={styles.checkbox}>
-//             <AnimatedCheckbox
-//               checked={newsletter}
-//               highlightColor='#F4CE14'
-//               checkmarkColor='#495E57'
-//               boxOutlineColor='#F4CE14'
-//             />
-//           </View>
-//           <Text style={styles.label}>Newsletter</Text>
-//         </Pressable>
-
-//         {/* <View style={styles.checkboxContainer}>
-//           <CheckBox
-//             value={specialOffers}
-//             onValueChange={setSpecialOffers}
-//             style={styles.checkbox}
-//           />
-//           <Text style={styles.label}>Special offers</Text>
-//         </View>
-
-//         <View style={styles.checkboxContainer}>
-//           <CheckBox
-//             value={newsletter}
-//             onValueChange={setNewsletter}
-//             style={styles.checkbox}
-//           />
-//           <Text style={styles.label}>Newsletter</Text>
-//         </View> */}
-
-//         <Pressable onPress={logOut}
-//         style={styles.buttonEnabled}>
-//           <Text style={styles.buttonText}>Log out</Text>
-//         </Pressable>
-
-//         <View style={styles.buttonsSection}>
-//           <Pressable onPress={discardChanges}
-//           style={styles.buttonCancel}>
-//             <Text style={styles.buttonText}>Discard changes</Text>
-//           </Pressable>
-
-//           <Pressable onPress={saveChanges}
-//           style={styles.buttonConfirm}>
-//             <Text style={styles.buttonText}>Save changes</Text>
-//           </Pressable>
-//         </View>
-
-//       </ScrollView>
-    
-//       {/* </ScrollView> */}
-//       </SafeAreaView>
-//     // </KeyboardAvoidingView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     // height: '100%',
-//     backgroundColor: 'black',
-//     // alignItems: 'center',
-//     // justifyContent: 'center',
-//   },
-//   header: {
-//     //paddingTop: 100,
-//     color: '#EDEFEE',
-//     //backgroundColor: '#F4CE14',
-//     backgroundColor: '#EDEFEE',
-//     width: '100%',
-//     //height: '15%',
-//     // flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   headerText: {
-//     textAlign: 'center',
-//     fontSize: 36,
-//   },
-//   body: {
-//     // flexGrow: 1,
-//     //fontSize: 32,
-//     color: '#EDEFEE',
-//     textAlign: 'center',
-//     backgroundColor: '#495E57',
-//     width: '100%',
-//     //height: '84%',
-//     flex: 6,
-//     paddingHorizontal: 24,
-//     // justifyContent: 'center',
-//   },
-//   form: {
-//     // padding: 20,
-//     // fontSize: 32,
-//     // color: '#EDEFEE',
-//     //textAlign: 'center',
-//   },
-//   title: {
-//     paddingVertical: 12,
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     // textAlign: 'center',
-//     color: '#EDEFEE',
-//   },
-//   // regularText: {
-//   //   fontSize: 24,
-//   //   // marginTop: 24,
-//   //   marginBottom: 12,
-//   //   color: '#EDEFEE',
-//   //   textAlign: 'center',
-//   // },
-//   inputBox: {
-//     height: 48,
-//     marginBottom: 16,
-//     //borderWidth: 2,
-//     borderRadius: 18,
-//     paddingHorizontal: 24,
-//     fontSize: 18,
-//     borderColor: '#333333',
-//     backgroundColor: '#EDEFEE',
-//   },
-//   buttonEnabled: {
-//     backgroundColor: '#F4CE14',
-//     padding: 14,
-//     borderRadius: 18,
-//     marginTop: 16,
-//     // marginLeft: 220,
-//   },
-//   buttonDisabled: {
-//     backgroundColor: '#EDEFEE',
-//     padding: 18,
-//     borderRadius: 18,
-//     marginTop: 60,
-//     marginLeft: 220,
-//   },
-//   buttonText: {
-//     fontSize: 18,
-//     textAlign: 'center',
-//     color: '#EDEFEE',
-//     fontWeight: 'bold',
-//   },
-//   logo: {
-//     height: 50,
-//     width: 280,
-//     marginBottom: 15,
-//   },
-//   checkboxContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     marginTop: 8,
-//   },
-//   checkbox: {
-//     width: 32,
-//     height: 32,
-//   },
-//   label: {
-//     margin: 8,
-//     color: '#EDEFEE',
-//   },
-//   avatarSection: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-evenly',
-//     paddingBottom: 24,
-//     // flexWrap: 'wrap',
-//   },
-//   buttonsSection: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-evenly',
-//     marginVertical: 16,
-//   },
-//   avatarIcon: {
-//     height: 80,
-//     width: 80,
-//     borderRadius: 40,
-//     backgroundColor: '#333333',
-//   },
-//   buttonCancel: {
-//     // backgroundColor: '#EDEFEE',
-//     padding: 14,
-//     borderRadius: 18,
-//     borderColor: '#EE9972',
-//     borderWidth: 2,
-//     // marginTop: 60,
-//     // marginLeft: 220,
-//   },
-//   buttonConfirm: {
-//     backgroundColor: '#EE9972',
-//     padding: 14,
-//     borderRadius: 18,
-//     // marginTop: 60,
-//     // marginLeft: 220,
-//   },
-//   sectionTitle: {
-//     marginBottom: 8,
-//     fontSize: 16,
-//     color: '#EDEFEE',
-//   }
-// });

@@ -10,4 +10,5 @@ export const validName = (name) => {
       /^[a-zA-Z]*$/
     );
   }
+  return false
 };

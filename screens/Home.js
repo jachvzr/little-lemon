@@ -7,13 +7,9 @@ import debounce from 'lodash.debounce';
 
 import { createTable, clearDatabase, getMenuItems, saveMenuItems, filterByQueryAndCategories } from '../functions/SQLiteFunctions';
 import Filters from '../utils/Filters';
+import { readData } from '../functions/AsyncStorageFunctions';
 
-// const db = SQLite.openDatabase({ name: 'mydb.db', createFromLocation: '~capstone.db' });
-
-// import { parse } from 'react-native-svg';
-
-// const categories = [{'name':'starters'},{'name':'mains'},{'name':'desserts'}];
-const categories = ['starters', 'mains', 'desserts','other1'];
+const categories = ['starters', 'mains', 'desserts'];
 
 export default function Home({ navigation }) {
 
@@ -28,17 +24,23 @@ export default function Home({ navigation }) {
     const [selectedItems, setSelectedItems] = useState([]);
 
     useFocusEffect(
-        React.useCallback(() => {
-            updateInitials(true);
-        })
+      React.useCallback(() => {
+    
+        updateInitials(true);
+
+      }, [])
     );
 
+
+
+
+
     useEffect(() => {
+      
         (async () => {
-        //   console.log('first use effect');
           try {
+            await updateInitials(true);
             await createTable();
-            // await clearDatabase();
             let menuItems = await getMenuItems();
             if (!menuItems.length) {
               menuItems = await fetchData();
@@ -77,14 +79,16 @@ export default function Home({ navigation }) {
         try {
           if (fromAsync) {
             rAvatar = await AsyncStorage.getItem('avatar');
-            if (rAvatar !== null) {
-              value = '';
-            } else {
+
+            if (rAvatar === null) {
               rFirstName = await AsyncStorage.getItem('firstName');
               rLastName = await AsyncStorage.getItem('lastName');
               value = rFirstName['0'];
-              if (rLastName !== 'null') {value = value + rLastName['0']}
+              if (rLastName !== null && rLastName !== '' && rLastName !== 'null') {value = value + rLastName['0']}
+            } else {
+              value = '';
             }
+
           } else {
             if (avatar !== null) {
               value = '';
@@ -97,7 +101,6 @@ export default function Home({ navigation }) {
           setInitials(value);
           
         } catch(error) {
-          console.log(error);
         }
       };
 
@@ -105,7 +108,6 @@ export default function Home({ navigation }) {
         (async () => {
           try {
             const filterArray = selectedItems.length === 0 ? categories : selectedItems;
-            // console.log('useEffect: ' + filterArray)
             const filteredMenuItems = await filterByQueryAndCategories(query, filterArray);
             setData(filteredMenuItems);
           } catch (e) {
@@ -163,11 +165,9 @@ export default function Home({ navigation }) {
             }
             onPress={() => handleToggleItem(category)}
         >
-        {/* <View style={styles.filterItem}> */}
             <Text style={
                 isSelected ? styles.filterItemTextSelected : styles.filterItemText
             }>{category}</Text>
-        {/* </View> */}
         </Pressable>
         );
     };
@@ -197,11 +197,6 @@ export default function Home({ navigation }) {
 
     return (
 
-    // <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-    // <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-
-    //{/* <SafeAreaView> */}
-    //{/* <ScrollView> */}
     <View style={styles.container}>
 
     <View style={styles.header}>
@@ -218,9 +213,7 @@ export default function Home({ navigation }) {
         <ImageBackground
             key={avatar ? avatar : Math.random()}
             style={styles.avatarIcon}
-            // imageStyle={{ borderRadius: 40 }}
             resizeMode='contain'
-            //source={require('../assets/Logo.png')}
             source={{ uri: avatar }}>
             <View style={styles.overAvatar}>
             <Text style={styles.textOverAvatar}>{initials}</Text>
@@ -252,7 +245,6 @@ export default function Home({ navigation }) {
             <View style={styles.heroBlockRight}>
                 <Image
                 style={styles.heroImage}
-                // resizeMode='contain'
                 source={require('../assets/HeroImage.png')}
                 />
             </View>            
@@ -280,11 +272,7 @@ export default function Home({ navigation }) {
               horizontal={true}
             keyExtractor={(item) => item}
         />
-        {/* <Filters
-        selections={filterSelections}
-        onChange={handleFiltersChange}
-        sections={sections}
-        /> */}
+
     </View>
 
 
@@ -301,11 +289,6 @@ export default function Home({ navigation }) {
     
     </View>
 
-    // {/* </ScrollView> */}
-    // {/* </SafeAreaView> */}
-    
-    // </TouchableWithoutFeedback>
-    // </KeyboardAvoidingView>
   );
 }
 
@@ -313,35 +296,24 @@ const styles = StyleSheet.create({
     
   container: {
     flex: 1,
-    // height: '100%',
     backgroundColor: '#EDEFEE',
     alignSelf: 'stretch',
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   hero: {
     backgroundColor: '#495E57',
-    // flex: 1,
-    // flexDirection: 'column',
     padding: 30,
     paddingBottom: 4,
 },
 heroTitle: {
     color: '#F4CE14',
     fontSize: 42,
-    // margin: 30,
-// textAlign: 'center',
 },
 heroBlock: {
-    // flex: 1,
     flexDirection: 'row',
-    // alignSelf: 'stretch',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // backgroundColor: 'blue',
 },
 heroSearch: {
-    // marginBottom: 15,
 },
 heroSubtitle: {
     fontSize: 26,
@@ -357,7 +329,6 @@ heroBlockLeft: {
     flex: 1,
 },
 heroBlockRight: {
-    // backgroundColor: 'red',
 },
 heroImage: {
     width: 150,
@@ -370,9 +341,6 @@ heroImage: {
     paddingHorizontal: 16,
     color: '#EDEFEE',
     backgroundColor: '#EDEFEE',
-    // backgroundColor: 'blue',
-    // width: '100%',
-    // height: '18%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -384,8 +352,6 @@ heroImage: {
   filters: {
     height: 80,
     backgroundColor: '#DDD',
-    // paddingLeft: 30,
-    // marginLeft: 30,
   },
   filterTitle: {
     fontSize: 20,
@@ -436,9 +402,6 @@ heroImage: {
     marginRight: 20,
   },
   itemImageFrame: {
-    // width: 100,
-    // height: 100,
-    // resizeMode: 'contain',
   },
   itemImage: {
     width: 100,
@@ -452,37 +415,20 @@ heroImage: {
     marginTop: 8,
   },
   body: {
-    // flexGrow: 1,
-    //fontSize: 32,
     color: '#EDEFEE',
     textAlign: 'center',
     backgroundColor: '#495E57',
-    // width: '100%',
-    //height: '84%',
     flex: 6,
     paddingHorizontal: 24,
-    // justifyContent: 'center',
   },
   form: {
-    // padding: 20,
-    // fontSize: 32,
-    // color: '#EDEFEE',
-    //textAlign: 'center',
   },
   title: {
     paddingVertical: 12,
     fontSize: 18,
     fontWeight: 'bold',
-    // textAlign: 'center',
     color: '#EDEFEE',
   },
-  // regularText: {
-  //   fontSize: 24,
-  //   // marginTop: 24,
-  //   marginBottom: 12,
-  //   color: '#EDEFEE',
-  //   textAlign: 'center',
-  // },
   inputBox: {
     height: 48,
     marginVertical: 16,
@@ -578,15 +524,11 @@ heroImage: {
     borderRadius: 18,
     borderColor: '#EE9972',
     borderWidth: 2,
-    // marginTop: 60,
-    // marginLeft: 220,
   },
   buttonConfirm: {
     backgroundColor: '#EE9972',
     padding: 14,
     borderRadius: 18,
-    // marginTop: 60,
-    // marginLeft: 220,
   },
   sectionTitle: {
     marginBottom: 8,

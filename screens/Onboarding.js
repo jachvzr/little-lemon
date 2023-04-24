@@ -45,7 +45,7 @@ const Onboarding = ({ route }) => {
     dataFromOnboarding();
   }, []);
 
-  const validateName = () => {
+  const validateName = async () => {
     if (firstName !== null) {
       const value = firstName.trim();
       if (validName(value)) {
@@ -56,7 +56,7 @@ const Onboarding = ({ route }) => {
     }
   };
 
-  const validateEmail = () => {
+  const validateEmail = async () => {
     if (email !== null) {
       const value = email.trim();
       if (validEmail(value)) {
@@ -81,6 +81,10 @@ const Onboarding = ({ route }) => {
       } else if (!validEmail(email)) {
         alert('not valid email');
       } else {
+
+        writeData('email', email);
+        writeData('firstName', firstName);
+
         // navigation.navigate('Profile');
         // writeData('onboarding','true');
         route.params.setIsOnboardingCompleted(true);

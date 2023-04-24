@@ -29,15 +29,6 @@ const Filters = ({ onChange, selections, sections }) => {
 };
 
 
-{/* <FlatList
-            data={categories}
-            renderItem={({ item }) => (
-                <FilterItem category={item.name} />
-              )}
-              horizontal={true}
-            keyExtractor={(item) => item.name}
-        /> */}
-
 const styles = StyleSheet.create({
   filtersContainer: {
     backgroundColor: 'green',
